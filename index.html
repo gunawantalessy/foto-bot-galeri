@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foto Bot - Ambil & Unggah Foto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1 {
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #cameraFeed {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin: 20px auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .gallery img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Foto Bot - Ambil & Unggah Foto</h1>
+        <div class="button-group">
+            <button onclick="bukaKamera()">Buka Kamera</button>
+            <button onclick="tutupKamera()">Tutup Kamera</button>
+        </div>
+        <video id="cameraFeed" autoplay></video>
+        <button id="captureBtn" onclick="ambilFoto()" style="display:none;">Ambil Foto</button>
+        <input type="file" id="fileInput" accept="image/*" multiple style="margin-top: 10px;">
+        <div class="gallery" id="gallery"></div>
+    </div>
+    <div class="modal" id="modal" onclick="tutupModal()">
+        <img id="modalImage">
+    </div>
+    <script>
+        let stream;
+        const cameraFeed = document.getElementById('cameraFeed');
+        const captureBtn = document.getElementById('captureBtn');
+        const fileInput = document.getElementById('fileInput');
+        const gallery = document.getElementById('gallery');
+        const modal = document.getElementById('modal');
+        const modalImage = document.getElementById('modalImage');
+
+        function bukaKamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(mediaStream => {
+                    stream = mediaStream;
+                    cameraFeed.srcObject = stream;
+                    cameraFeed.style.display = 'block';
+                    captureBtn.style.display = 'block';
+                })
+                .catch(error => {
+                    alert("Tidak dapat mengakses kamera. Pastikan kamu memberikan izin.");
+                    console.error("Error accessing camera:", error);
+                });
+        }
+
+        function tutupKamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                cameraFeed.style.display = 'none';
+                captureBtn.style.display = 'none';
+            }
+        }
+
+        function ambilFoto() {
+            const canvas = document.createElement('canvas');
+            canvas.width = cameraFeed.videoWidth;
+            canvas.height = cameraFeed.videoHeight;
+            canvas.getContext('2d').drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+            tampilkanFoto(canvas.toDataURL('image/png'));
+        }
+
+        fileInput.addEventListener('change', function () {
+            Array.from(fileInput.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => tampilkanFoto(e.target.result);
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function tampilkanFoto(fotoURL) {
+            const img = document.createElement('img');
+            img.src = fotoURL;
+            img.onclick = () => bukaModal(fotoURL);
+            gallery.appendChild(img);
+        }
+
+        function bukaModal(fotoURL) {
+            modalImage.src = fotoURL;
+            modal.style.display = 'flex';
+        }
+
+        function tutupModal() {
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
